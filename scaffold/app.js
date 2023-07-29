@@ -6,35 +6,26 @@ const carMarket = {
   // getAgencyByName
   // @param {string} - name
   // @return {Object} - agency object
-  getAgencyByName : function (agencies, agencyNameQuery) {
-    const agency = agencies.find(
-      ({ agencyName }) => agencyName === agencyNameQuery
-    );
-    if (!agency) {
-      return `Agency named "${agencyNameQuery}" doesn't exists`;
-    }
-    return agency.agencyName;
+  getAgencyByName : function (agencies, agencyName) {
+    const agency = agencies.find((agency) => agency.agencyName === agencyName);
+      if (!agency) {        
+        console.log(`Agency named "${agencyName} not found`)
+        return;
+    }    
+    return agency;
   },
 
   // getAgencyIdByName
   // @param {String} - name
   // @return {String} - agencyId
-  getAgencyIdByName : function (agencies, agencyNameQuery) {
-    const agency = agencies.find(
-      ({ agencyName }) => agencyName === agencyNameQuery
-    );
-    if (!agency) {
-      return `Agency named "${agencyNameQuery}" doesn't exists`;
-    }
-    return agency.agencyId;
+  getAgencyIdByName : function (agencies, agencyName) {
+    const agency = this.getAgencyByName(agencies, agencyName)
+    return agency ? agency.agencyId : "ID not found"
   },
 
   // getAllAgenciesName
   // @return {string[]} - agenciesNameArr - Array of all agencies name
-  getAllAgenciesName : function (agencies) {
-    const names = agencies.map(({ agencyName }) => agencyName)
-    return names
-  },
+  getAllAgenciesName : function (agencies) {return agencies.map(({agencyName}) => agencyName)},
 
   // getAllCarToBuy
   // @return {object[]} - allCarsToBuy - arrays of all cars objects
@@ -101,17 +92,22 @@ const carMarket = {
   // @param {string} - name
   // @return {Object} - customer
   getCustomerByName : function (name) {
-      const customerName = customers.filter(customer => customer.name.includes(name))
-      if (customerName) {
-      return customerName
-    }
-    return []
+      const customer = customers.filter(customer => customer.name.includes(name))
+      if (customer[0]) {        
+        return customer[0];      
+      }    
+      console.log(`"${name}" not found`);
+      return null;
+      
   },
 
   // getCustomerIdByName
   // @param {name}
   // @return {String} - customerId - The customer id
-  getCustomerIdByName : function (name) {},
+  getCustomerIdByName : function (name) {
+    const customer = this.getCustomerByName(name)
+    return customer ? customer.id : 'ID not found'
+  },
 
   // getAllCustomersNames
   // @return {string[]} - customersNameArr -  Array of all customers name
@@ -248,11 +244,12 @@ const carMarket = {
 
 
 console.log(
-  // carMarket.getAgencyByName(agencies,"Best Deal"),
-  // carMarket.getAgencyIdByName(agencies,"The Auto World"),
-  // carMarket.getAllAgenciesName(agencies),
-  // carMarket.getAllCarToBuy(agencies),
+  // carMarket.getAgencyByName(agencies,"Best Dal")
+  // carMarket.getAgencyIdByName(agencies,"Best Deal")
+  // carMarket.getAllAgenciesName(agencies)
+  // carMarket.getAllCarToBuy(agencies)
   // carMarket.getAllCarToBuyByAgencyId("gNHjNFL12")
   // carMarket.getAllBrandsToBuyByAgencyId("gNHjNFL12")
   // carMarket.getCustomerByName("Phil")
+  carMarket.getCustomerIdByName("Phil")
 );
