@@ -265,7 +265,16 @@ getDecrementOrIncrement: function (oldVal, updatedByVal) {
   // setAmountOfCarsToBuyToAllAgency's
   // set a new property amountOfCars to all agency's, that represent the amount of cars available in the agency.
   // @return {objects[]} - sellers - array of all agency's
-  setAmountOfCarsToBuyToAllAgency: function (carMarket) {},
+  setAmountOfCarsToBuyToAllAgency: function () {      
+      agencies.forEach(agency => {
+        agency.amountOfCars = 0
+        for (const {models} of agency.cars) {
+          console.log('car.models',models)
+          agency.amountOfCars += models.length
+        }
+      })
+      return agencies
+  },
 
   // setCarToCostumer
   // @param {string} - costumerId
@@ -386,7 +395,8 @@ console.log(
 // carMarket.setPropertyBrandToAllCars()
 // carMarket.deleteCarFromAgency('26_IPfHU1', 'chill-4u')
     // carMarket.decrementOrIncrementCashOfAgency("Plyq5M5AZ", 20)
-    carMarket.decrementOrIncrementCreditOfAgency("Plyq5M5AZ", -220)
+    // carMarket.decrementOrIncrementCreditOfAgency("Plyq5M5AZ", -220)
+    carMarket.setAmountOfCarsToBuyToAllAgency()
 );
 
 
