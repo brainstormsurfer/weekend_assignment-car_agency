@@ -212,25 +212,36 @@ const carMarket = {
     console.log(agency.cars);
   },
 
-  // // deleteCarFromAgency
-  // // @param {string} - id of agency
-  // // @param {string} -  Car id
+  // deleteCarFromAgency
+  // @param {string} - id of agency
+  // @param {string} -  Car id
   deleteCarFromAgency: function (agencyId, carId) {
     const agency = this.getAgencyById(agencyId);
     if (!agency) {
       console.log("Agency not found");
     }
-    const filteredCarsArr = agency.cars.filter(
-      (car) => car.carNumber !== carId
-    );
+    let carToDelete = {};
+    agency.cars.forEach((car) => {
+      const filteredModels = car.models.filter((model) => {
+        if (model.carNumber === carId) {
+          carToDelete = model;
+        }
+        return model.carNumber !== carId;
+      });
 
-    if (filteredCarsArr.length > 0) {
-      agency.cars = filteredCarsArr;
-    }
+      if (filteredModels.length === 0) {
+        delete car.brand;
+      }
+
+      car.models = filteredModels;
+      return car;
+    });
 
     // ?? log to check if successfully delete
     console.log(
-      `Cars list of ${agency.agencyName} agency without the deleted object:`
+      `Updated cars list of "${
+        agency.agencyName
+      }" agency \n(without the deleted car: ${JSON.stringify(carToDelete)}) :`
     );
     for (const car of agency.cars) {
       console.log(car.brand.toUpperCase());
@@ -240,10 +251,13 @@ const carMarket = {
     return agency.cars;
   },
 
-  // getDecrementOrIncrementString
+  // !! getDecrementOrIncrementLiteral
   getDecrementOrIncrement: function (oldVal, updatedByVal) {
     const newVal = oldVal + updatedByVal;
-    if (newVal > oldVal) {
+    if (newVal < 0) {
+      console.log(`Balance is ${Math.abs(newVal)} short. Transaction rejected!`); 
+      return 'rejected'
+    } else if (newVal > oldVal) {
       return "increment";
     } else {
       return "decrement";
@@ -256,13 +270,16 @@ const carMarket = {
   // @return {number} - agencyCash
   decrementOrIncrementCashOfAgency: function (agencyId, amount) {
     const agency = this.getAgencyById(agencyId);
-    if (agency) {
-      const action = this.getDecrementOrIncrement(agency.cash, amount);
-      console.log(`Agency cash before ${action}: ${agency.cash}`);
-      agency.cash += amount;
-      console.log(`Agency cash after ${action}: ${agency.cash}`);
-    }
-    return agency.cash;
+    const updatedCashValue = agency.cash + amount;
+    if (agency) {      
+      const action = this.getDecrementOrIncrement(agency.cash, amount);    
+      if (action !== 'rejected') {       
+        console.log(`Agency's cash before ${action}: ${agency.cash}`);
+        agency.cash += updatedCashValue;
+        console.log(`Agency's cash after ${action}: ${agency.cash}`);
+        return agency.cash;
+      } else return agency.cash;      
+    } else console.log('Agency not found')
   },
 
   // decrementOrIncrementCreditOfAgency
@@ -271,13 +288,17 @@ const carMarket = {
   // @return {number} - agencyCash
   decrementOrIncrementCreditOfAgency: function (agencyId, amount) {
     const agency = this.getAgencyById(agencyId);
+    const updatedCashValue = agency.credit + amount;
+
     if (agency) {
       const action = this.getDecrementOrIncrement(agency.credit, amount);
-      console.log(`Agency credit before ${action}: ${agency.credit}`);
-      agency.credit += amount;
-      console.log(`Agency credit after ${action}: ${agency.credit}`);
-    }
-    return agency.credit;
+      if (action !== 'rejected') {       
+        console.log(`Agency's credit before ${action}: ${agency.credit}`);
+        agency.credit = updatedCashValue;
+        console.log(`Agency's credit after ${action}: ${agency.credit}`);
+        return agency.credit;
+      } else return agency.credit;
+    } else console.log('Agency not found')
   },
 
   // setAmountOfCarsToBuyToAllAgency's
@@ -300,43 +321,23 @@ const carMarket = {
   // @return {object[]} - allCarsOfCostumer
   setCarToCostumer: function (customerId, carObj) {
     // get customer
-    // const customer = this.getCustomerById(customerId);
-    // if (customer) console.log("customer", customer);
-    // else console.log("customer not found");
-    // if (carObj) console.log("carObj", carObj);
-    // get car
-    // const car = agencies.find(({ cars }) => {
-    //   console.log("cars", cars);
-    //   return cars.find(({ models }) => {
-    //     console.log("models", models);
-    //     return models.some((car) => {
-    //       if (car.name === carObj.name) {
-    //         console.log("car!", car);
-    //         return car;
-    //       } else {
-    //         console.log("no car?", car);
-    //         return false;
-    //       }
-    //     });
-    //   });
-    // });
-    // {
-    // if (car === carObj) {
-    //   console.log("MATCH", car);
-    // }
-    // });
-    // if (car) console.log("car", car);
-    // else console.log("no car found");
-    // check if customer have enough cash to buy car
-    // if (customer.cash - )
-    // const allCars = this.getAllCarsToBuy
-    //   if yes - check if car exists/available in the agency
-    //   if yes  - set him/her the requested car
-    //   if no - return an informative message
-    //   if no(t enough money) -
-    //   check for other cars available considering customer budget
-    //   if yes - return an array of possibilities (as an obj)
-    //   if no - return an informative message of the problem (as an obj?)
+    const customer = this.getCustomerById(customerId);
+    if (!customer) {
+      console.log("customer not found");
+      return [];
+    }
+    if (!carObj) {
+      console.log("car not found");
+    }
+    const isLegitToBuyCar = customer.cash - carObj.price > 0 ? true : false;
+    if (isLegitToBuyCar) {
+      let agency = this.getAgencyById(carObj.ownerId);
+      this.deleteCarFromAgency(agency.agencyId, carObj.carNumber);
+      return customer.cars;
+    } else {
+      console.log(`Purchase isn't allow due to balance issue.`);
+      return [];
+    }
   },
 
   // deleteCarOfCostumer
@@ -349,11 +350,20 @@ const carMarket = {
   // @param {string} - costumerId
   // @param {number} - amount - negative or positive amount
   // @return {number} - costumerCash
-  decrementOrIncrementCashOfCostumer: function (
-    marketObj,
-    customerId,
-    amount
-  ) {},
+  decrementOrIncrementCashOfCostumer: function (customerId,amount) {
+    const customer = this.getCustomerById(customerId)
+    const updatedCashValue = customer.cash + amount;
+
+    if (customer) {      
+      const action = this.getDecrementOrIncrement(customer.cash, amount);
+      if (action !== 'rejected') {       
+        console.log(`customer's cash before ${action}: ${customer.cash}`);
+      customer.cash = updatedCashValue;
+      console.log(`customer's cash after ${action}: ${customer.cash}`);
+      return customer.cash;    
+    } else return customer.cash ;
+  } else console.log('Customer not found')
+  },
 
   //   sortAndFilterByYearOfProduction
   //   filter and Sort in a Ascending or Descending order all vehicles for sale by year of production.
@@ -521,18 +531,18 @@ console.log(
   // })
   // carMarket.setPropertyBrandToAllCars()
   // carMarket.deleteCarFromAgency('26_IPfHU1', 'chill-4u')
-  // carMarket.decrementOrIncrementCashOfAgency("Plyq5M5AZ", 20)
-  // carMarket.decrementOrIncrementCreditOfAgency("Plyq5M5AZ", -220)
+  // carMarket.decrementOrIncrementCashOfAgency("Plyq5M5AZ", -20000)
+  // carMarket.decrementOrIncrementCreditOfAgency("Plyq5M5AZ", -22000)
   // carMarket.setAmountOfCarsToBuyToAllAgency()
-  //   carMarket.setCarToCostumer("BGzHhjnE8", {
-  //     name: "3",
-  //     year: 2015,
-  //     price: 137000,
-  //     carNumber: "AZJZ4",
-  //     ownerId: "Plyq5M5AZ",
-  //   })
-  // );
-  // carMarket.searchCar("bmw", 2015, 2020, 50000, 1500000, false)
+  // carMarket.setCarToCostumer("2RprZ1dbL", {
+  //   name: "Hilux",
+  //   year: 2005,
+  //   price: 35005,
+  //   carNumber: "MWXBG",
+  //   ownerId: "Plyq5M5AZ",
+  // })
+  // carMarket.decrementOrIncrementCashOfCostumer("5x2tMcX4R", -50000)
+  // carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false)
 );
 
 // ?? ---------------------- //
