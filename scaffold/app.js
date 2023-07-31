@@ -52,38 +52,7 @@ const carMarket = {
   // getAllCarsToBuy
   // @return {object[]} - allCarsToBuy - arrays of all cars objects
   getAllCarsToBuy: function () {
-    let allCars = [];
-    agencies.forEach((agency) => {
-      let agencyKeyValueArr = Object.entries(agency);
-      for (const [key, value] of agencyKeyValueArr) {
-        if (key === "cars") {
-          value.forEach(({ brand, models }) => {
-            let existingBrand = allCars.find((car) => {
-              return car.brand === brand;
-            });
-            if (existingBrand) {
-              models.forEach((model) => {
-                if (!existingBrand.models.includes(model)) {
-                  existingBrand.models.push(model);
-                }
-              });
-            } else {
-              let uniqueModels = [];
-              models.forEach((model) => uniqueModels.push(model));
-              allCars = [
-                ...allCars.flat(),
-                { brand: brand, models: uniqueModels },
-              ];
-            }
-          });
-        }
-      }
-    });
-
-    console.log(
-      "Clarification! Each obj of allCars array has 2 properties: A Brand (string) and an array of ALL MODELS OBJECTS of this brand"
-    );
-    return allCars;
+    return agencies.flatMap((agency) => agency.cars.flatMap((car) => car.models));
   },
 
   // getAllCarsToBuyByAgencyId
@@ -178,30 +147,55 @@ const carMarket = {
   // set all cars model object the current brand
   setPropertyBrandToAllCars: function () {
     const allCars = this.getAllCarsToBuy();
+        
+    allCars.forEach((modelToUpdate) => {
+      for (const agency of agencies) {
+        // console.log("AGENCY",agency);        
+          agency.cars.some((car) => {
+          car.models.some((model) => {
+            if (model.name === modelToUpdate) {
+              console.log("CAR", car);
+              console.log("MODEL", model);                
+            }
+            return true
+          })
+          return true
+          })      
+      }})
+            // if (car.name === )
+            // carToUpdate = {...carToUpdate, brand: car.brand}
+            // allCars.find((model) => model.name === car.name)
+            // console.log('BRAND',brand);             
+
+    // return allCars
+    // allCars.forEach((car) => {
+    //   car = {...car, brand: }
+    // })
+
     // matching a brand for all cars of each customer
-    for (const customer of customers) {
-      for (const customerCar of customer.cars) {
-        let isMatchFound = false;
-        for (const car of allCars) {
-          const carModelsNames = car.models.map(({ name }) => name);
-          if (carModelsNames.includes(customerCar.name)) {
-            customerCar.brand = car.brand.toUpperCase();
-            isMatchFound = true;
-            // once finding a brand quitting the iteration
-            break;
-          }
-        }
-        if (isMatchFound) {
-          console.log(
-            `${customer.name}'s model ${customerCar.name} updated with brand ${customerCar.brand}`
-          );
-        } else {
-          console.log(
-            `No match found for ${customer.name}'s model ${customerCar.name}`
-          );
-        }
-      }
-    }
+    // for (const customer of customers) {
+    //   for (const customerCar of customer.cars) {
+    //     let isMatchFound = false;
+    //     for (const car of allCars) {
+    //       const carModelsNames = car.map(({ name }) => name);
+    //       if (carModelsNames.includes(customerCar.name)) {
+    //         customerCar.brand = car.brand.toUpperCase();
+    //         isMatchFound = true;
+    //         // once finding a brand quitting the iteration
+    //         break;
+    //       }
+    //     }
+    //     if (isMatchFound) {
+    //       console.log(
+    //         `${customer.name}'s model ${customerCar.name} updated with brand ${customerCar.brand}`
+    //       );
+    //     } else {
+    //       console.log(
+    //         `No match found for ${customer.name}'s model ${customerCar.name}`
+    //       );
+    //     }
+    //   }
+    // }
   },
   // // setNewCarToAgency
   // // @param {string} - id of agency
@@ -528,15 +522,6 @@ const carMarket = {
     return [];
   },
 
-  // if (filteredCars.length > 0 && isYearsInRange && isPriceInRange) {
-  //   console.log(`${filteredCars.length} results meet your requirements`)
-  // } else if (filteredCars.length > 0 && (isYearsInRange || isPriceInRange)) {
-  //   console.log('Search was only partially successful');
-  // } else {
-  //   console.log('no cars meet your requirements currently')
-  // }
-  // },
-
   //   Sell ​​a car to a specific customer
   //   @param {string} - agencyId
   //   @param {string} - customerId
@@ -556,10 +541,49 @@ const carMarket = {
   //      - h. Add the vehicle amount + tax to sumOfAllTransactions
   //     - Check that there is the requested vehicle at the agency in not return 'The vehicle does not exist at the agency'
   //     - Check that the customer has enough money to purchase the vehicle, if not return 'The customer does not have enough money'
-  //   sellCar: function (marketObj, agencyId, customerId, carModel) {}
+    sellCar: function (agencyId, customerId, carModel) {
+      const agency = this.getAgencyById(agencyId)
+      if (!agency) {
+        console.log("Agency not found");
+        return null;
+      }
+      const customer = this.getCustomerById(customerId)
+      if (!customer) {
+        console.log("Customer not found");
+        return null;
+      }
+      const allModels = agency.cars.flatMap((car) => car.models);
+      const requestedCar = allModels.find((car) => car.name === carModel);
+      
+      if (!requestedCar) {
+        console.log("Requested car not found.");
+        return null;
+      }
+      const carPriceIncludeTax = requestedCar.price + requestedCar.price * 0.17;      
+      const customerCashAfterBuy = customer.cash - carPriceIncludeTax
+            
+      if (customerCashAfterBuy < 0) {
+          console.log(`Customer missing $${Math.abs(customerCashAfterBuy)} in order to buy this model`)
+          return null;
+        }
 
-  // }
-};
+      console.log('agency.cash before pre-sale', agency.cash);
+      agency.cash += carPriceIncludeTax;
+      console.log('agency.cash before post-sale', agency.cash);          
+      
+      requestedCar.ownerId = customerId;
+      agency.cars = agency.cars.flatMap((car) => car.models).filter((car) => car.name !== carModel);
+      customer.cars.push(requestedCar);
+    
+      // ? - CHECKING PURCHASE RESULTS
+      console.log('REQUESTED CAR', requestedCar);
+      console.log('AGENCY CARS AFTER SALE', agency.cars);
+      console.log('CUSTOMER CARS AFTER BUY', customer.cars);
+      console.log('=======(return car object)=======');
+
+      return requestedCar
+  }
+}
 // ? ------- TESTS ------- //
 console.log(
   // carMarket.getAgencyById('26_IPfHU1'),
@@ -569,7 +593,7 @@ console.log(
   // carMarket.getAllAgenciesName()
 
   // "CONSOOOOOoooLONG1",
-  // ! carMarket.getAllCarsToBuy()
+  //  carMarket.getAllCarsToBuy()
   // carMarket.getAllCarsToBuyByAgencyId("gNHjNFL12")
   // carMarket.getAllBrandsToBuyByAgencyId("gNHjNFL12")
   // carMarket.getCustomerByName("Phil")
@@ -607,8 +631,9 @@ console.log(
   // carMarket.sortAndFilterByYearOfProduction(2000, 2005, true)
   // carMarket.sortAndFilterByPrice(20000, 200500, false)
   // carMarket.sortAndFilterByPrice(20000, 200500, false)
-  carMarket.deleteCarOfCostumer("FQvNsEwLZ", "vaJvd")
-  // carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false)
+  // carMarket.deleteCarOfCostumer("FQvNsEwLZ", "vaJvd")
+  //!  carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false) 
+  carMarket.sellCar("Plyq5M5AZ", "2RprZ1dbL", "Corolla")
 );
 
 // ?? ---------------------- //
