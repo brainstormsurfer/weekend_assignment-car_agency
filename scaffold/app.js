@@ -226,6 +226,7 @@ const carMarket = {
     const agency = this.getAgencyById(agencyId);
     if (!agency) {
       console.log("Agency not found");
+      return null;
     }
     let carToDelete = {};
     agency.cars.forEach((car) => {
@@ -354,7 +355,35 @@ const carMarket = {
   // @param {string} - carId
   // @return {object[]} - allCarsOfCostumer
   deleteCarOfCostumer: function (customerId, carId) {
-      const customer = 
+    const customer = this.getCustomerById(customerId);
+    if (!customer) {
+      console.log("Customer not found");
+      return null;
+    }
+    let carToDelete = {};    
+    const filteredModels = customer.cars.filter((model) => {
+      // console.log('car',car);
+      // filteredModels = car.models.filter((model) => {
+        if (model.carNumber === carId) {
+          carToDelete = model;
+        }
+        return model.carNumber !== carId;
+      });
+
+      customer.cars = filteredModels;          
+    
+
+    // ?? log to check if successfully delete
+    console.log(
+      `Updated cars list of "${
+        customer.name
+      }" customer \n(without the deleted car: ${JSON.stringify(carToDelete)}) :`
+    );
+    for (const car of customer.cars) {
+      console.log(car);
+    }
+
+    return customer.cars;
   },
 
   // decrementOrIncrementCashOfCostumer
@@ -577,7 +606,8 @@ console.log(
   // carMarket.decrementOrIncrementCashOfCostumer("5x2tMcX4R", -50000)
   // carMarket.sortAndFilterByYearOfProduction(2000, 2005, true)
   // carMarket.sortAndFilterByPrice(20000, 200500, false)
-  carMarket.sortAndFilterByPrice(20000, 200500, false)
+  // carMarket.sortAndFilterByPrice(20000, 200500, false)
+  carMarket.deleteCarOfCostumer("FQvNsEwLZ", "vaJvd")
   // carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false)
 );
 
