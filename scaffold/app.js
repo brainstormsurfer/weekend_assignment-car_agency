@@ -3,7 +3,7 @@ let customers = require("../data/customers");
 const taxesAuthority = require("../data/taxesAuthority");
 
 const carMarket = {
-  // ?? - getAgencyById --- not formally requested (yet useful)
+  // ? - getAgencyById
   getAgencyById: function (agencyId) {
     const agency = agencies.find((agency) => agency.agencyId === agencyId);
     if (!agency) {
@@ -13,7 +13,7 @@ const carMarket = {
     return agency;
   },
 
-  // ?? - getAgencyById --- not formally requested (yet useful)
+  // ? - getAgencyById
   getCustomerById: function (customerId) {
     const customer = customers.find((customer) => customer.id === customerId);
     if (!customer) {
@@ -52,14 +52,15 @@ const carMarket = {
   // getAllCarsToBuy
   // @return {object[]} - allCarsToBuy - arrays of all cars objects
   getAllCarsToBuy: function () {
-    let allCarsOfAgency = [];
     let allCars = [];
     agencies.forEach((agency) => {
       let agencyKeyValueArr = Object.entries(agency);
       for (const [key, value] of agencyKeyValueArr) {
         if (key === "cars") {
           value.forEach(({ brand, models }) => {
-            let existingBrand = allCars.find((car) => car.brand === brand);
+            let existingBrand = allCars.find((car) => {
+              return car.brand === brand;
+            });
             if (existingBrand) {
               models.forEach((model) => {
                 if (!existingBrand.models.includes(model)) {
@@ -68,14 +69,20 @@ const carMarket = {
               });
             } else {
               let uniqueModels = [];
-              models.map((model) => uniqueModels.push(model));
-              allCarsOfAgency.push({ brand: brand, models: uniqueModels });
+              models.forEach((model) => uniqueModels.push(model));
+              allCars = [
+                ...allCars.flat(),
+                { brand: brand, models: uniqueModels },
+              ];
             }
           });
-          allCars = Object.assign(allCars, allCarsOfAgency);
         }
       }
     });
+
+    console.log(
+      "Clarification! Each obj of allCars array has 2 properties: A Brand (string) and an array of ALL MODELS OBJECTS of this brand"
+    );
     return allCars;
   },
 
@@ -251,12 +258,14 @@ const carMarket = {
     return agency.cars;
   },
 
-  // !! getDecrementOrIncrementLiteral
+  // ? getDecrementOrIncrementLiteral
   getDecrementOrIncrement: function (oldVal, updatedByVal) {
     const newVal = oldVal + updatedByVal;
     if (newVal < 0) {
-      console.log(`Balance is ${Math.abs(newVal)} short. Transaction rejected!`); 
-      return 'rejected'
+      console.log(
+        `Balance is ${Math.abs(newVal)} short. Transaction rejected!`
+      );
+      return "rejected";
     } else if (newVal > oldVal) {
       return "increment";
     } else {
@@ -271,15 +280,15 @@ const carMarket = {
   decrementOrIncrementCashOfAgency: function (agencyId, amount) {
     const agency = this.getAgencyById(agencyId);
     const updatedCashValue = agency.cash + amount;
-    if (agency) {      
-      const action = this.getDecrementOrIncrement(agency.cash, amount);    
-      if (action !== 'rejected') {       
+    if (agency) {
+      const action = this.getDecrementOrIncrement(agency.cash, amount);
+      if (action !== "rejected") {
         console.log(`Agency's cash before ${action}: ${agency.cash}`);
         agency.cash += updatedCashValue;
         console.log(`Agency's cash after ${action}: ${agency.cash}`);
         return agency.cash;
-      } else return agency.cash;      
-    } else console.log('Agency not found')
+      } else return agency.cash;
+    } else console.log("Agency not found");
   },
 
   // decrementOrIncrementCreditOfAgency
@@ -292,13 +301,13 @@ const carMarket = {
 
     if (agency) {
       const action = this.getDecrementOrIncrement(agency.credit, amount);
-      if (action !== 'rejected') {       
+      if (action !== "rejected") {
         console.log(`Agency's credit before ${action}: ${agency.credit}`);
         agency.credit = updatedCashValue;
         console.log(`Agency's credit after ${action}: ${agency.credit}`);
         return agency.credit;
       } else return agency.credit;
-    } else console.log('Agency not found')
+    } else console.log("Agency not found");
   },
 
   // setAmountOfCarsToBuyToAllAgency's
@@ -344,25 +353,27 @@ const carMarket = {
   // @param {string} - costumerId
   // @param {string} - carId
   // @return {object[]} - allCarsOfCostumer
-  // deleteCarOfCostumer: function (marketObj, customerId, carId) {},
+  deleteCarOfCostumer: function (customerId, carId) {
+      const customer = 
+  },
 
   // decrementOrIncrementCashOfCostumer
   // @param {string} - costumerId
   // @param {number} - amount - negative or positive amount
   // @return {number} - costumerCash
-  decrementOrIncrementCashOfCostumer: function (customerId,amount) {
-    const customer = this.getCustomerById(customerId)
+  decrementOrIncrementCashOfCostumer: function (customerId, amount) {
+    const customer = this.getCustomerById(customerId);
     const updatedCashValue = customer.cash + amount;
 
-    if (customer) {      
+    if (customer) {
       const action = this.getDecrementOrIncrement(customer.cash, amount);
-      if (action !== 'rejected') {       
+      if (action !== "rejected") {
         console.log(`customer's cash before ${action}: ${customer.cash}`);
-      customer.cash = updatedCashValue;
-      console.log(`customer's cash after ${action}: ${customer.cash}`);
-      return customer.cash;    
-    } else return customer.cash ;
-  } else console.log('Customer not found')
+        customer.cash = updatedCashValue;
+        console.log(`customer's cash after ${action}: ${customer.cash}`);
+        return customer.cash;
+      } else return customer.cash;
+    } else console.log("Customer not found");
   },
 
   //   sortAndFilterByYearOfProduction
@@ -373,11 +384,24 @@ const carMarket = {
   //   @param {boolean} - isAscendingOrder - true for ascending order, false for descending order
   //   @return {object[]} - arrayOfModels - array of sorted cars
   sortAndFilterByYearOfProduction: function (
-    carArray,
     fromYear,
     toYear,
     isAscendingOrder
-  ) {},
+  ) {
+    const allCars = this.getAllCarsToBuy();
+    const allModels = allCars.flatMap(({ models }) => models);
+    const carsFilteredByYearsRange = allModels.filter(
+      (car) => car.year >= fromYear && car.year <= toYear
+    );
+    carsFilteredByYearsRange.sort((a, b) => {
+      if (isAscendingOrder) {
+        return a.year - b.year;
+      } else {
+        return b.year - a.year;
+      }
+    });
+    return carsFilteredByYearsRange;
+  },
 
   //   sortAndFilterByPrice
   //   filter and Sort in a Ascending or Descending order all vehicles for sale by price of the cars.
@@ -386,12 +410,21 @@ const carMarket = {
   //   @param {number} - fromPrice - Will display vehicles up to this price
   //   @param {boolean} - isAscendingOrder - true for ascending order, false for descending order
   //   @return {object[]} - arrayOfModels - array of sorted cars
-  sortAndFilterByPrice: function (
-    carArray,
-    fromPrice,
-    toPrice,
-    isAscendingOrder
-  ) {},
+  sortAndFilterByPrice: function (fromPrice, toPrice, isAscendingOrder) {
+    const allCars = this.getAllCarsToBuy();
+    const allModels = allCars.flatMap(({ models }) => models);
+    const carsFilteredByYearsPrice = allModels.filter(
+      (car) => car.price >= fromPrice && car.price <= toPrice
+    );
+    carsFilteredByYearsPrice.sort((a, b) => {
+      if (isAscendingOrder) {
+        return a.price - b.price;
+      } else {
+        return b.price - a.price;
+      }
+    });
+    return carsFilteredByYearsPrice;
+  },
 
   //   searchCar
   //   @param {object[]} - arrOfCars - array of cars
@@ -498,7 +531,7 @@ const carMarket = {
 
   // }
 };
-// ?? ------- TESTS ------- //
+// ? ------- TESTS ------- //
 console.log(
   // carMarket.getAgencyById('26_IPfHU1'),
   // carMarket.getCustomerById('BGHhjnE8'),
@@ -507,7 +540,7 @@ console.log(
   // carMarket.getAllAgenciesName()
 
   // "CONSOOOOOoooLONG1",
-  // carMarket.getAllCarsToBuy()
+  // ! carMarket.getAllCarsToBuy()
   // carMarket.getAllCarsToBuyByAgencyId("gNHjNFL12")
   // carMarket.getAllBrandsToBuyByAgencyId("gNHjNFL12")
   // carMarket.getCustomerByName("Phil")
@@ -542,6 +575,9 @@ console.log(
   //   ownerId: "Plyq5M5AZ",
   // })
   // carMarket.decrementOrIncrementCashOfCostumer("5x2tMcX4R", -50000)
+  // carMarket.sortAndFilterByYearOfProduction(2000, 2005, true)
+  // carMarket.sortAndFilterByPrice(20000, 200500, false)
+  carMarket.sortAndFilterByPrice(20000, 200500, false)
   // carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false)
 );
 
