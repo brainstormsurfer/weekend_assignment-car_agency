@@ -551,7 +551,8 @@ const carMarket = {
       if (!customer) {
         console.log("Customer not found");
         return null;
-      }
+      }      
+
       const allModels = agency.cars.flatMap((car) => car.models);
       const requestedCar = allModels.find((car) => car.name === carModel);
       
@@ -566,20 +567,29 @@ const carMarket = {
           console.log(`Customer missing $${Math.abs(customerCashAfterBuy)} in order to buy this model`)
           return null;
         }
-
-      console.log('agency.cash before pre-sale', agency.cash);
+        
+      console.log('agency.cash BEFORE', agency.cash);
       agency.cash += carPriceIncludeTax;
-      console.log('agency.cash before post-sale', agency.cash);          
+      console.log('agency.cash AFTER', agency.cash);          
       
       requestedCar.ownerId = customerId;
       agency.cars = agency.cars.flatMap((car) => car.models).filter((car) => car.name !== carModel);
       customer.cars.push(requestedCar);
-    
+      
       // ? - CHECKING PURCHASE RESULTS
-      console.log('REQUESTED CAR', requestedCar);
-      console.log('AGENCY CARS AFTER SALE', agency.cars);
-      console.log('CUSTOMER CARS AFTER BUY', customer.cars);
-      console.log('=======(return car object)=======');
+      console.log('taxesAuthority.totalTaxesPaid BEFORE taking 17% of the trade value', taxesAuthority.totalTaxesPaid);
+      taxesAuthority.totalTaxesPaid += requestedCar.price * 0.17
+      console.log('taxesAuthority.totalTaxesPaid AFTER', taxesAuthority.totalTaxesPaid);
+
+      console.log('taxesAuthority.sumOfAllTransactions BEFORE', taxesAuthority.sumOfAllTransactions);
+      taxesAuthority.sumOfAllTransactions += carPriceIncludeTax
+      console.log('taxesAuthority.sumOfAllTransactions AFTER', taxesAuthority.sumOfAllTransactions);
+
+      // ? - CHECKING PURCHASE RESULTS
+      // console.log('REQUESTED CAR', requestedCar);
+      // console.log('AGENCY CARS AFTER SALE', agency.cars);
+      // console.log('CUSTOMER CARS AFTER BUY', customer.cars);
+      // console.log('=======(return car object)=======');
 
       return requestedCar
   }
@@ -633,7 +643,7 @@ console.log(
   // carMarket.sortAndFilterByPrice(20000, 200500, false)
   // carMarket.deleteCarOfCostumer("FQvNsEwLZ", "vaJvd")
   //!  carMarket.searchCar("bmw", 2015, 2020, 50000, 150000, false) 
-  carMarket.sellCar("Plyq5M5AZ", "2RprZ1dbL", "Corolla")
+  carMarket.sellCar("Plyq5M5AZ", "2RprZ1dbL", "Hilux")
 );
 
 // ?? ---------------------- //
